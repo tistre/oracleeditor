@@ -1,0 +1,112 @@
+OracleEditor.php ChangeLog
+==================================
+
+2013-08-27  Tim Strehle  <tim@strehle.de>
+
+    Moved from SourceForge.net to GitHub.com.
+    
+2006-05-12  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.20: 
+    Allow slash and colon in service name for Oracle Instant Client connection 
+    syntax. Allow dollar sign in user name.
+    Now works with php.ini setting "short_open_tag = Off".
+    
+2005-06-28  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.19: 
+    For UTF-8 detection, use getenv('NLS_LANG') instead of $_SERVER[ 'NLS_LANG' ].
+
+2005-06-10  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.18:
+    Added PHP version and required module check.
+    Added "online help" via the HTML title attribute.
+    Selecting a new table or modifying the SQL statement now cancels export mode.
+    Make the browser scroll to the row to insert/update/delete row.
+    When switching from popup to manual SQL entry mode, the current SELECT
+    statement is used to pre-fill the SQL statement textarea.
+
+2004-11-17  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.17:
+    Now working with the php.ini setting "magic_quotes_gpc = On" as well.
+    Added accesskeys to buttons and links and automatically focusing form
+    fields on page load for fast keyboard navigation.
+    Added set size "1000".
+    Displaying some Oracle-related environment variables at the bottom.
+
+2004-04-27  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.16:
+    Beautified the displayed version string.
+
+2004-04-27  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.15:
+    Added export format "HTML table".
+    The table popup now shows other Oracle user's tables if the current user
+    is allowed to access them.
+    Use CVS revision number for the version number.
+
+2004-01-07  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.14:
+    Allow dollar sign in table names.
+
+2003-11-28  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.13:
+    Fixed empty columns not being exported in CSV format.
+
+2003-11-28  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.12:
+    Added XML and CSV export.
+    Session ID is now passed along with GET/POST requests, allowing you to
+    run OracleEditor in multiple browser windows (which wasn't possible with
+    the cookie-based session ID).
+    Fixed password validation bug, which filtered special characters from the
+    password entered (you couldn't log in if your password was "$pecial").
+    Added ocisetprefetch(), which might improve performance.
+
+2003-10-20  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.11:
+    Set HTML character set to UTF-8 when the Oracle connection runs in UTF-8
+    mode (as defined in the NLS_LANG environment variable).
+
+2003-10-10  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.10:
+    Cosmetics - fixed "Insert new row" line missing one column.
+
+2003-09-26  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.9:
+    Fixed rownumber INSERT bug.
+
+2003-09-24  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.8:
+    Added row number display.
+
+2003-08-21  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.7:
+    Added "Switch to manual SQL entry" option, allowing you to run arbitrary
+    SQL including DML/DDL statements.
+
+2003-08-05  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.6:
+    Display views as well.
+
+2003-05-26  Tim Strehle  <tim@strehle.de>
+
+    * Version 1.5:
+    Now rows from all tables can be edited, not only from tables which have a primary
+    key defined. And the primary key need not be in the SELECT clause anymore to
+    be able to edit rows.
+    Debug mode logs all SQL statements in the PHP error_log.
+    Fixed not moving to the first set after changes to the WHERE clause.
