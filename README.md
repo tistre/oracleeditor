@@ -3,7 +3,7 @@ OracleEditor.php
 
 ![OracleEditor.php screenshot](screenshot_update.jpg)
 
-**OracleEditor.php** is a standalone PHP script which allows you to **browse your Oracle database tables and insert, update and delete rows in any table**. It requires **no installation** and **no configuration**.
+**OracleEditor.php** is a standalone PHP script which allows you to **browse your Oracle database tables and insert, update and delete rows in any table**. It requires **no installation** and **no configuration**. It's from 2006 but can still be useful.
 
 I wrote it for situations where you quickly need to do some small data manipulation and don’t have a better tool available. OracleEditor.php is free and Open Source. Feel free to contact me with questions/comments specific to this script. For general information on using PHP with Oracle, please refer to the [Oracle Technology Network](http://www.oracle.com/technetwork/topics/php/whatsnew/index.html) or the [PHP manual](http://www.php.net/manual/en/ref.oci8.php).
 
