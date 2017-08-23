@@ -1526,7 +1526,7 @@ else
 								echo
 									'<a href="' . $_SERVER[ 'PHP_SELF' ] . '?sid=' . $sid .
 									'&table=' . urlencode($foreign[ 'to' ][ $columnname ][ 'table' ]) .
-									'&keepwhere=' . urlencode("where " . $foreign[ 'to' ][ $columnname ][ 'column' ] . "='" . ereg_replace("'", "''", $row[ $columnname ]) . "'") .
+									'&keepwhere=' . urlencode("where " . $foreign[ 'to' ][ $columnname ][ 'column' ] . "='" . str_replace("'", "''", $row[ $columnname ]) . "'") .
 									'" title="Click here to display the referenced ' . htmlspecialchars($foreign[ 'to' ][ $columnname ][ 'table' ]) . ' record">';
 
 							  echo htmlspecialchars($row[ $columnname ]);
@@ -1543,7 +1543,7 @@ else
 									echo
 										'<nobr><a href="' . $_SERVER[ 'PHP_SELF' ] . '?sid=' . $sid .
 										'&table=' . urlencode($item[ 'table' ]) .
-										'&keepwhere=' . urlencode("where " . $item[ 'column' ] . "='" . ereg_replace("'", "''", $row[ $columnname ]) . "'") .
+										'&keepwhere=' . urlencode("where " . $item[ 'column' ] . "='" . str_replace("'", "''", $row[ $columnname ]) . "'") .
 										'" title="Click here to display references to this record in ' . htmlspecialchars($item[ 'table' ] . '.' . $item[ 'column' ]) . '">-&gt; ' .
 										nl2br(htmlspecialchars(wordwrap($item[ 'table' ] . '.' . $item[ 'column' ], 30, "-\n", true))) . '</a></nobr>' . "\n";
 								  }
