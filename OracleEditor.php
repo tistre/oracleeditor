@@ -102,14 +102,7 @@ if (isset($_REQUEST[ 'connection' ]))
 		$_SESSION[ 'connection' ][ 'service' ] = substr(trim(preg_replace('|[^a-zA-Z0-9:.() =/_-]|', '', $_REQUEST[ 'connection' ][ 'service' ])), 0, 2000);
 	}
 
-// Rather dumb character set detection:
-// Try switching to UTF-8 automagically on stuff like "NLS_LANG=american_america.UTF8"
-
-$charset = 'ISO-8859-1';
-
-if (getenv('NLS_LANG'))
-  if (strtoupper(substr(getenv('NLS_LANG'), -5)) == '.UTF8')
-	$charset = 'UTF-8';
+$charset = 'UTF-8';
 
 // Initialize debug mode
 
@@ -585,14 +578,22 @@ function pof_sqlline($msg, $error = false)
 
 
 function pof_connect()
-{ global $conn;
+{
+    global $conn;
 
-  $conn = ocilogon($_SESSION[ 'connection' ][ 'user' ], $_SESSION[ 'connection' ][ 'password' ], $_SESSION[ 'connection' ][ 'service' ]);
+	$conn = oci_connect
+	(
+		$_SESSION[ 'connection' ][ 'user' ],
+		$_SESSION[ 'connection' ][ 'password' ],
+		$_SESSION[ 'connection' ][ 'service' ],
+		'AL32UTF8'
+	);
 
-  $err = ocierror();
+	$err = ocierror();
 
-  if (is_array($err))
-	echo htmlspecialchars('Logon failed: ' . $err[ 'message' ]) . '<br />' . "\n";
+	if (is_array($err)) {
+		echo htmlspecialchars('Logon failed: ' . $err[ 'message' ]) . '<br />' . "\n";
+	}
 }
 
 
@@ -994,7 +995,7 @@ if ($conn == false)
 		$requirements_ok = false;
 	  }
 
-	if (! function_exists('ocilogon'))
+	if (! function_exists('oci_connect'))
 	  { echo "<strong>PHP has no Oracle OCI support</strong>: Your PHP installation doesn't have the <a href=\"http://www.php.net/manual/en/ref.oci8.php\">OCI8 module</a> installed which is required to run OracleEditor.php!<br />\n";
 		$requirements_ok = false;
 	  }
