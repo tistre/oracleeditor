@@ -20,7 +20,7 @@ Simply download the OracleEditor.php file and copy it on your web server.
 Requirements
 ------------
 
-You need a webserver running PHP 4 (version 4.1 or greater) with Session and OCI8 support. OracleEditor.php works fine with the php.ini setting register_globals=off.
+You need a webserver running PHP 5 or PHP 7 with Session and OCI8 support. OracleEditor.php works fine with the php.ini setting register_globals=off.
 
 Features
 
