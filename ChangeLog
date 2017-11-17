@@ -1,6 +1,10 @@
 OracleEditor.php ChangeLog
 ==================================
 
+2017-11-17  Tim Strehle  <tim@strehle.de>
+
+    Fixed homepage URL in footer.
+
 2017-08-24  Tim Strehle  <tim@strehle.de>
 
     Changed to always use UTF-8 - non-Unicode data is not supported anymore.
