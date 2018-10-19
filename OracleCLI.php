@@ -29,23 +29,31 @@ $version = trim(substr('$Revision: 1.20 $', 10, -1));
 
 $defaults = [
     'format' => 'xml',
-    'limit' => 100
+    'limit' => 100,
+    'page' => 1
 ];
 
-$options = getopt('', ['user:', 'password:', 'service:', 'format:', 'query:', 'limit:']);
+$options = getopt('', ['user:', 'password:', 'service:', 'format:', 'query:', 'limit:', 'page:']);
 
 $requiredOptions = ['user', 'password', 'service', 'query'];
 
 foreach ($requiredOptions as $option) {
     if (!isset($options[$option])) {
-        die(sprintf("ERROR: --%s is required.\n", $option));
+        fwrite(STDERR, sprintf("ERROR: --%s is required.\n", $option));
+        exit(1);
     }
 }
 
 $options = array_merge($defaults, $options);
 
 if (!is_numeric($options['limit'])) {
-    die("ERROR: --limit must be a number.\n");
+    fwrite(STDERR, "ERROR: --limit must be a number.\n");
+    exit(1);
+}
+
+if (!is_numeric($options['page'])) {
+    fwrite(STDERR, "ERROR: --page must be a number.\n");
+    exit(1);
 }
 
 $exportformats = [
@@ -55,19 +63,22 @@ $exportformats = [
 ];
 
 if (!isset($exportformats[$options['format']])) {
-    die(sprintf("ERROR: --format must be one of %s.\n", implode(', ', array_keys($exportformats))));
+    fwrite(STDERR, sprintf("ERROR: --format must be one of %s.\n", implode(', ', array_keys($exportformats))));
+    exit(1);
 }
 
 // Initialize database connection parameters
 
 if ($options['user'] !== substr(preg_replace('/[^a-zA-Z0-9$_-]/', '',
-                $options['user']), 0, 30)) {
-    die("ERROR: --user contains invalid characters.\n");
+        $options['user']), 0, 30)) {
+    fwrite(STDERR, "ERROR: --user contains invalid characters.\n");
+    exit(1);
 }
 
 if ($options['service'] !== substr(preg_replace('|[^a-zA-Z0-9:.() =/_-]|', '',
         $options['service']), 0, 2000)) {
-    die("ERROR: --service contains invalid characters.\n");
+    fwrite(STDERR, "ERROR: --service contains invalid characters.\n");
+    exit(1);
 }
 
 $charset = 'UTF-8';
@@ -93,7 +104,8 @@ $cursor = pof_opencursor($options['query']);
 if ($cursor) {
     if (ocistatementtype($cursor) !== 'SELECT') {
         pof_closecursor($cursor);
-        die("ERROR: --query must be a SELECT statement.\n");
+        fwrite(STDERR, "ERROR: --query must be a SELECT statement.\n");
+        exit(1);
     }
 }
 
@@ -109,6 +121,19 @@ for ($j = 1; $j <= $numcols; $j++) {
     }
 }
 
+// Skip previous sets
+
+$rowOffset = 0;
+
+if ($options['page'] > 1) {
+    $rowOffset = ($options['page'] - 1) * $options['limit'];
+    for ($j = 1; $j <= $rowOffset; $j++) {
+        if (!ocifetch($cursor)) {
+            break;
+        }
+    }
+}
+
 // Header
 
 if ($options['format'] == 'xml') {
@@ -118,9 +143,10 @@ if ($options['format'] == 'xml') {
     $userstr = $options['user'];
     $userstr .= '@' . $options['service'];
 
-    echo sprintf('<rowset exported="%s" user="%s" server="%s">', date('Y-m-d\TH:i:s'), $userstr,
-            $_SERVER['SERVER_NAME']) . "\n";
-    echo sprintf("\t<sql>%s</sql>\n", htmlspecialchars($options['query']));
+    echo sprintf('<rowset exported="%s" user="%s" server="%s">', date('Y-m-d\TH:i:s'), htmlspecialchars($userstr),
+            htmlspecialchars(php_uname('n'))) . "\n";
+    echo sprintf("\t<sql limit=\"%d\" page=\"%d\">%s</sql>\n", $options['limit'], $options['page'],
+        htmlspecialchars($options['query']));
 
     // Column aliases: We can use column names as tag names only if
     // they're valid XML names - <count(MYFIELD)> won't work.
@@ -211,7 +237,8 @@ while (true) {
     }
 
     if ($options['format'] == 'xml') {
-        echo sprintf("\t<row%s>\n",
+        echo sprintf("\t<row num=\"%d\"%s>\n",
+            ($i + $rowOffset),
             (isset($row['ROWID_']) ? (' id="' . htmlspecialchars($row['ROWID_']) . '"') : ''));
 
         foreach ($row as $fieldname => $value) {
@@ -257,7 +284,7 @@ while (true) {
         echo "</tr>\n";
     }
 
-    if (($exportlimit > 0) && ($exportlimit <= ++$i)) {
+    if (($exportlimit > 0) && ($exportlimit < ++$i)) {
         break;
     }
 }
@@ -297,7 +324,8 @@ function pof_connect()
     $err = ocierror();
 
     if (is_array($err)) {
-        die(sprintf("ERROR: Logon failed: %s\n", $err['message']));
+        fwrite(STDERR, sprintf("ERROR: Logon failed: %s\n", $err['message']));
+        exit(1);
     }
 }
 
@@ -321,7 +349,8 @@ function pof_opencursor($sql, $bind = false)
     if (!$cursor) {
         $err = ocierror($conn);
         if (is_array($err)) {
-            die(sprintf("ERROR: Parse failed: %s\n", $err['message']));
+            fwrite(STDERR, sprintf("ERROR: Parse failed: %s\n", $err['message']));
+            exit(1);
         }
     } else { // This might improve performance?
         ocisetprefetch($cursor, $options['limit']);
@@ -338,7 +367,8 @@ function pof_opencursor($sql, $bind = false)
             $err = ocierror($cursor);
 
             if (is_array($err)) {
-                die(sprintf("ERROR: Execute failed: %s\n", $err['message']));
+                fwrite(STDERR, sprintf("ERROR: Execute failed: %s\n", $err['message']));
+                exit(1);
             }
 
             pof_closecursor($cursor);
