@@ -1,6 +1,10 @@
 OracleEditor.php ChangeLog
 ==================================
 
+2024-11-11  Tim Strehle  <tim.strehle@mailbox.org>
+
+    Fix crash in PHP 8 by removing "magic_quotes_gpc" support.
+
 2017-11-17  Tim Strehle  <tim@strehle.de>
 
     Fixed homepage URL in footer.
