@@ -53,7 +53,7 @@ if (isset($_REQUEST[ 'sid' ]))
   $sid = substr(trim(preg_replace('/[^a-f0-9]/', '', $_REQUEST[ 'sid' ])), 0, 13);
 
 if ($sid == '')
-  $sid = uniqid('');
+  $sid = uniqid();
 
 // Start PHP session
 
@@ -350,20 +350,20 @@ if ($doexport)
 	$cursor = pof_opencursor($main_sql);
 
 	if ($cursor)
-	  if (ocistatementtype($cursor) == 'SELECT')
+	  if (oci_statement_type($cursor) == 'SELECT')
 		$ok = true;
 
 	if ($ok)
 	  { // Get column list
 
 		$columns = array();
-		$numcols = ocinumcols($cursor);
+		$numcols = oci_num_fields($cursor);
 
 		for ($j = 1; $j <= $numcols; $j++)
-		  if (ocicolumnname($cursor, $j) != 'ROWID_')
-			$columns[ (ocicolumnname($cursor, $j)) ] = array(
-				'type' => ocicolumntype($cursor, $j),
-				'size' => ocicolumnsize($cursor, $j)
+		  if (oci_field_name($cursor, $j) != 'ROWID_')
+			$columns[ (oci_field_name($cursor, $j)) ] = array(
+				'type' => oci_field_type($cursor, $j),
+				'size' => oci_field_size($cursor, $j)
 				);
 
 		// Header
@@ -460,7 +460,8 @@ if ($doexport)
 		$i = 1;
 
 		while (true)
-		  { if (! ocifetchinto($cursor, $row, OCI_ASSOC | OCI_RETURN_LOBS))
+		  { $row = oci_fetch_array($cursor, OCI_ASSOC | OCI_RETURN_LOBS);
+            if ($row === false)
 			  break;
 
 			if ($_SESSION[ 'exportformat' ] == 'xml')
@@ -578,7 +579,7 @@ function pof_connect()
 		'AL32UTF8'
 	);
 
-	$err = ocierror();
+	$err = oci_error();
 
 	if (is_array($err)) {
 		echo htmlspecialchars('Logon failed: ' . $err[ 'message' ]) . '<br />' . "\n";
@@ -590,32 +591,32 @@ function pof_disconnect()
 { global $conn;
 
   if ($conn)
-	ocilogoff($conn);
+	oci_close($conn);
 }
 
 
 function pof_opencursor($sql, $bind = false)
 { global $conn;
 
-  $cursor = ociparse($conn, $sql);
+  $cursor = oci_parse($conn, $sql);
 
   if (! $cursor)
-	{ $err = ocierror($conn);
+	{ $err = oci_error($conn);
 	  if (is_array($err))
 		echo pof_sqlline('Parse failed: ' . $err[ 'message' ], true);
 	}
   else
 	{ // This might improve performance?
-	  ocisetprefetch($cursor, $_SESSION[ 'setsize' ]);
+	  oci_set_prefetch($cursor, $_SESSION[ 'setsize' ]);
 
 	  if (is_array($bind))
 		foreach ($bind as $fieldname => $value)
-		  ocibindbyname($cursor, ':' . $fieldname, $bind[ $fieldname ], -1);
+		  oci_bind_by_name($cursor, ':' . $fieldname, $bind[ $fieldname ], -1);
 
-	  $ok = ociexecute($cursor);
+	  $ok = oci_execute($cursor);
 
 	  if (! $ok)
-		{ $err = ocierror($cursor);
+		{ $err = oci_error($cursor);
 
 		  if (is_array($err))
 			echo pof_sqlline('Execute failed: ' . $err[ 'message' ], true);
@@ -632,7 +633,7 @@ function pof_opencursor($sql, $bind = false)
 
 function pof_closecursor($cursor)
 { if ($cursor)
-	ocifreestatement($cursor);
+	oci_free_statement($cursor);
 }
 
 
@@ -654,7 +655,8 @@ function pof_gettables()
 
 	  if ($cursor)
 		{ while (true)
-			{ if (! ocifetchinto($cursor, $row, OCI_ASSOC | OCI_RETURN_LOBS))
+			{ $row = oci_fetch_array($cursor, OCI_ASSOC | OCI_RETURN_LOBS);
+              if ($row === false)
 				break;
 
 			  if (trim($row[ 'OWNER' ]) == '')
@@ -681,7 +683,8 @@ function pof_getviews()
 
 	  if ($cursor)
 		{ while (true)
-			{ if (! ocifetchinto($cursor, $row, OCI_ASSOC | OCI_RETURN_LOBS))
+			{ $row = oci_fetch_array($cursor, OCI_ASSOC | OCI_RETURN_LOBS);
+              if ($row === false)
 				break;
 
 			  $_SESSION[ 'cache' ][ '_allviews' ][ ] = $row[ 'VIEW_NAME' ];
@@ -708,7 +711,8 @@ function pof_getpk($table)
 	  $cursor = pof_opencursor($sql, $bind);
 
 	  if ($cursor)
-		{ if (ocifetchinto($cursor, $row, OCI_NUM))
+		{ $row = oci_fetch_row($cursor);
+          if ($row !== false)
 			$_SESSION[ 'cache' ][ $table ][ 'pk' ] = $row[ 0 ];
 		  pof_closecursor($cursor);
 		}
@@ -732,7 +736,8 @@ function pof_getcoldefs($table)
 
 	  if ($cursor)
 		{ while (true)
-			{ if (! ocifetchinto($cursor, $row, OCI_ASSOC))
+			{ $row = oci_fetch_array($cursor, OCI_ASSOC);
+              if ($row === false)
 				break;
 
 			  $_SESSION[ 'cache' ][ $table ][ 'coldefs' ][ $row[ 'COLUMN_NAME' ] ] = array(
@@ -781,7 +786,8 @@ function pof_getforeignkeys($table)
 
 	  if ($cursor)
 		{ while (true)
-			{ if (! ocifetchinto($cursor, $row, OCI_ASSOC))
+			{ $row = oci_fetch_array($cursor, OCI_ASSOC);
+              if ($row === false)
 				break;
 
 			  $names[ ] = $row[ 'CONSTRAINT_NAME'   ];
@@ -802,7 +808,8 @@ function pof_getforeignkeys($table)
 
 		  if ($cursor)
 			{ while (true)
-				{ if (! ocifetchinto($cursor, $row, OCI_ASSOC))
+				{ $row = oci_fetch_array($cursor, OCI_ASSOC);
+                  if ($row === false)
 					break;
 
 				  $constraints[ $row[ 'CONSTRAINT_NAME' ] ] = $row;
@@ -818,7 +825,8 @@ function pof_getforeignkeys($table)
 
 		  if ($cursor)
 			{ while (true)
-				{ if (! ocifetchinto($cursor, $row, OCI_ASSOC))
+				{ $row = oci_fetch_array($cursor, OCI_ASSOC);
+                  if ($row === false)
 					break;
 
 				  $constraints[ $row[ 'CONSTRAINT_NAME' ] ][ 'COLUMN_NAME'  ] = $row[ 'COLUMN_NAME' ];
@@ -1171,26 +1179,26 @@ else
 
 			echo pof_sqlline($sql . ';');
 
-			$updcursor = ociparse($conn, $sql);
+			$updcursor = oci_parse($conn, $sql);
 
 			if (! $updcursor)
-			  { $err = ocierror($conn);
+			  { $err = oci_error($conn);
 				if (is_array($err))
 				  echo pof_sqlline('Parse failed: ' . $err[ 'message' ], true);
 			  }
 			else
 			  { foreach ($bind as $fieldname => $value)
-				  ocibindbyname($updcursor, ':' . $fieldname, $bind[ $fieldname ], -1);
+				  oci_bind_by_name($updcursor, ':' . $fieldname, $bind[ $fieldname ], -1);
 
-				$ok = ociexecute($updcursor);
+				$ok = oci_execute($updcursor);
 
 				if (! $ok)
-				  { $err = ocierror($updcursor);
+				  { $err = oci_error($updcursor);
 					if (is_array($err))
 					  echo pof_sqlline('Execute failed: ' . $err[ 'message' ], true);
 				  }
 
-				ocifreestatement($updcursor);
+				oci_free_statement($updcursor);
 			  }
 		  }
 
@@ -1203,25 +1211,25 @@ else
 
 		echo pof_sqlline($sql . ';');
 
-		$delcursor = ociparse($conn, $sql);
+		$delcursor = oci_parse($conn, $sql);
 
 		if (! $delcursor)
-		  { $err = ocierror($conn);
+		  { $err = oci_error($conn);
 			if (is_array($err))
 			  echo pof_sqlline('Parse failed: ' . $err[ 'message' ], true);
 		  }
 		else
-		  { ocibindbyname($delcursor, ':rowid_', $actionrecord[ 'rowid' ], -1);
+		  { oci_bind_by_name($delcursor, ':rowid_', $actionrecord[ 'rowid' ], -1);
 
-			$ok = ociexecute($delcursor);
+			$ok = oci_execute($delcursor);
 
 			if (! $ok)
-			  { $err = ocierror($delcursor);
+			  { $err = oci_error($delcursor);
 				if (is_array($err))
 				  echo pof_sqlline('Execute failed: ' . $err[ 'message' ], true);
 			  }
 
-			ocifreestatement($delcursor);
+			oci_free_statement($delcursor);
 		  }
 
 		$action = '';
@@ -1257,26 +1265,26 @@ else
 
 			echo pof_sqlline($sql . ';');
 
-			$inscursor = ociparse($conn, $sql);
+			$inscursor = oci_parse($conn, $sql);
 
 			if (! $inscursor)
-			  { $err = ocierror($conn);
+			  { $err = oci_error($conn);
 				if (is_array($err))
 				  echo pof_sqlline('Parse failed: ' . $err[ 'message' ], true);
 			  }
 			else
 			  { foreach ($bind as $fieldname => $value)
-				  ocibindbyname($inscursor, ':' . $fieldname, $bind[ $fieldname ], -1);
+				  oci_bind_by_name($inscursor, ':' . $fieldname, $bind[ $fieldname ], -1);
 
-				$ok = ociexecute($inscursor);
+				$ok = oci_execute($inscursor);
 
 				if (! $ok)
-				  { $err = ocierror($inscursor);
+				  { $err = oci_error($inscursor);
 					if (is_array($err))
 					  echo pof_sqlline('Execute failed: ' . $err[ 'message' ], true);
 				  }
 
-				ocifreestatement($inscursor);
+				oci_free_statement($inscursor);
 			  }
 		  }
 
@@ -1308,7 +1316,7 @@ else
 			  if ($item[ 'sql' ] == $histsql)
 				unset($_SESSION[ 'history' ][ $key ]);
 
-			$statementtype = ocistatementtype($cursor);
+			$statementtype = oci_statement_type($cursor);
 
 			$historyitem = array(
 				'sql'       => $histsql,
@@ -1334,13 +1342,13 @@ else
 		  {	// Get column list
 
 			$columns = array();
-			$numcols = ocinumcols($cursor);
+			$numcols = oci_num_fields($cursor);
 
 			for ($j = 1; $j <= $numcols; $j++)
-			  if (ocicolumnname($cursor, $j) != 'ROWID_')
-				$columns[ (ocicolumnname($cursor, $j)) ] = array(
-					'type' => ocicolumntype($cursor, $j),
-					'size' => ocicolumnsize($cursor, $j)
+			  if (oci_field_name($cursor, $j) != 'ROWID_')
+				$columns[ (oci_field_name($cursor, $j)) ] = array(
+					'type' => oci_field_type($cursor, $j),
+					'size' => oci_field_size($cursor, $j)
 					);
 
 			// Display main table
@@ -1402,7 +1410,7 @@ else
 				if ($_SESSION[ 'set' ] > 1)
 				  { $offset = ($_SESSION[ 'set' ] - 1) * $_SESSION[ 'setsize' ];
 					for ($j = 1; $j <= $offset; $j++)
-					  if (! ocifetch($cursor))
+					  if (! oci_fetch($cursor))
 						break;
 				  }
 
@@ -1416,7 +1424,8 @@ else
 				$i = 0;
 
 				while (true)
-				  { if (! ocifetchinto($cursor, $row, OCI_ASSOC | OCI_RETURN_LOBS))
+				  { $row = oci_fetch_array($cursor, OCI_ASSOC | OCI_RETURN_LOBS);
+                    if ($row === false)
 					  break;
 
 					$i++;
@@ -1547,7 +1556,7 @@ else
 					// Check whether there's a next result set
 
 					if ($i >= $_SESSION[ 'setsize' ])
-					  { if (ocifetch($cursor))
+					  { if (oci_fetch($cursor))
 						  $morerows = true;
 						break;
 					  }
@@ -1629,7 +1638,7 @@ else
 		elseif ($statementtype != '')
 		  { // Non-SELECT statements
 
-			$rowcount = ocirowcount($cursor);
+			$rowcount = oci_num_rows($cursor);
 
 			$words = array(
 				'UPDATE' => 'updated',
